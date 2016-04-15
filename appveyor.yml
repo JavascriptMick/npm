@@ -10,7 +10,7 @@ environment:
     # EOL summer 2016, most likely
     - nodejs_version: "0.8"
   COVERALLS_REPO_TOKEN:
-    secure: y+f32OuLBNyKzc39cD/5HLR9OadLIhyQBemVvIsVxZ0Po330JMfPeiABIDc1hAIO
+    secure: XdC0aySefK0HLh1GNk6aKrzZPbCfPQLyA4mYtFGEp4DrTuZA/iuCUS0LDqFYO8JQ
 platform:
   - x86
   - x64
@@ -28,7 +28,7 @@ test_script:
 notifications:
 - provider: Slack
   incoming_webhook:
-    secure: 48SDnPPTpndwEPd3ydG47Qzd9XiOmo4D9Ad77sCes/hZRsp3pT8sVy8YC+rSvK3OwgEjYCOcKTpYUrCrjlKHdPl/LnaLsWmpsJ3aUJeP9ts=
+    secure: vXiG5AgpqxJsXZ0N0CTYDuVrX6RMjBybZKtOx6IbRxCyjgd+DAx6Z9/0XgYQjuof7QFJY3M/U6HxaREQVYbNVHA+C5N5dNALRbKzAC8QNbA=
 # GO_FAST
 matrix:
   fast_finish: true
