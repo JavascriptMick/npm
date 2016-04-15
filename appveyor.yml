@@ -1,12 +1,13 @@
 environment:
   matrix:
-    # LTS first
+    # LTS is our most important target
     - nodejs_version: "4"
-    # latest next
+    # latest
     - nodejs_version: "5"
     # I like 0.10 better than 0.12
     - nodejs_version: "0.10"
     - nodejs_version: "0.12"
+    # EOL summer 2016, most likely
     - nodejs_version: "0.8"
   COVERALLS_REPO_TOKEN:
     secure: y+f32OuLBNyKzc39cD/5HLR9OadLIhyQBemVvIsVxZ0Po330JMfPeiABIDc1hAIO
