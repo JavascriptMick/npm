@@ -19,7 +19,7 @@ install:
   - npm config set spin false
   - npm rebuild
   - node . install -g .
-  - set PATH=%APPDATA%\npm;%PATH%
+  - set PATH="%APPDATA%\npm;C:\Program Files\Git\mingw64/libexec;%PATH%"
   - npm install --loglevel=http
 test_script:
   - node --version
