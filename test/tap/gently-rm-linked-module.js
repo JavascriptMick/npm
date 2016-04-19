@@ -6,23 +6,42 @@ var fs = require('graceful-fs')
 var test = require('tap').test
 var mkdirp = require('mkdirp')
 var rimraf = require('rimraf')
+var Tacks = require('tacks')
+var File = Tacks.File
+var Dir = Tacks.Dir
+var Symlink = Tacks.Symlink
+var extend = Object.assign || require('util')._extend
+var isWindows = require('../../lib/utils/is-windows.js')
 
 var base = resolve(__dirname, basename(__filename, '.js'))
-var pkg = resolve(base, 'gently-rm-linked')
-var dep = resolve(base, 'test-linked')
-var glb = resolve(base, 'test-global')
-var lnk = resolve(base, 'test-global-link')
+var fixture = new Tacks(Dir({
+  'working-dir': Dir({
+    'node_modules': Dir({}) // so it doesn't try to install into npm's own node_modules
+  }),
+  'test-module': Dir({
+    'package.json': File({
+      name: '@test/linked',
+      version: '1.0.0',
+      bin: {
+        linked: './index.js'
+      }
+    }),
+    'index.js': File("module.exports = function () { console.log('whoop whoop') }")
+  }),
+  'global-dir': Dir({}),
+  'linked-global-dir': Symlink('global-dir')
+}))
 
-var EXEC_OPTS = { cwd: pkg }
+var workingDir = resolve(base, 'working-dir')
+var toInstall = resolve(base, 'test-module')
+var linkedGlobal = resolve(base, 'linked-global-dir')
 
-var index = "module.exports = function () { console.log('whoop whoop') }"
-
-var fixture = {
-  name: '@test/linked',
-  version: '1.0.0',
-  bin: {
-    linked: './index.js'
-  }
+var env = extend({}, process.env)
+env.PREFIX = linkedGlobal
+var EXEC_OPTS = {
+  cwd: workingDir,
+  env: env,
+  stdio: [0, 1, 2]
 }
 
 test('setup', function (t) {
@@ -36,32 +55,41 @@ test('install and link', function (t) {
   // link our test module into the global folder
   common.npm(
     [
-      '--prefix', lnk,
       '--loglevel', 'error',
       'link',
-      dep
+      toInstall
     ],
     EXEC_OPTS,
-    function (er, code, stdout, stderr) {
+    function (er, code) {
       if (er) throw er
       t.is(code, 0, 'link succeeded')
-      t.is(stderr, '', 'no log output')
-      t.ok(doesModuleExist(), 'installed ok')
+      var globalBin = resolve(linkedGlobal, isWindows ? '.' : 'bin', 'linked')
+      var globalModule = resolve(linkedGlobal, isWindows ? '.' : 'lib', 'node_modules', '@test', 'linked')
+      var localBin = resolve(workingDir, 'node_modules', '.bin', 'linked')
+      var localModule = resolve(workingDir, 'node_modules', '@test', 'linked')
+      try {
+        t.ok(fs.statSync(globalBin), 'global bin exists')
+        t.is(fs.lstatSync(globalModule).isSymbolicLink(), true, 'global module is link')
+        t.ok(fs.statSync(localBin), 'local bin exists')
+        t.is(fs.lstatSync(localModule).isSymbolicLink(), true, 'local module is link')
+      } catch (ex) {
+        t.ifError(ex, 'linking happened')
+      }
+      if (code != 0) return t.end()
 
       // and try removing it and make sure that succeeds
       common.npm(
         [
           '--global',
-          '--prefix', lnk,
           '--loglevel', 'error',
           'rm', '@test/linked'
         ],
         EXEC_OPTS,
-        function (er, code, stdout, stderr) {
+        function (er, code) {
           if (er) throw er
           t.is(code, 0, 'rm succeeded')
-          t.is(stderr, '', 'no log output')
-          t.notOk(doesModuleExist(), 'removed ok')
+          t.throws(function () { fs.statSync(globalBin) }, 'global bin removed')
+          t.throws(function () { fs.statSync(globalModule) }, 'global module removed')
           t.end()
         }
       )
@@ -70,34 +98,16 @@ test('install and link', function (t) {
 })
 
 test('cleanup', function (t) {
-  cleanup()
+///  cleanup()
 
   t.end()
 })
 
-function doesModuleExist () {
-  var binPath = resolve(lnk, 'bin', 'linked')
-  var pkgPath = resolve(lnk, 'lib', 'node_modules', '@test', 'linked')
-  try {
-    fs.statSync(binPath)
-    fs.statSync(pkgPath)
-    return true
-  } catch (ex) {
-    return false
-  }
-}
-
 function cleanup () {
+  fixture.remove(base)
   rimraf.sync(base)
 }
 
 function setup () {
-  mkdirp.sync(pkg)
-  mkdirp.sync(glb)
-  fs.symlinkSync(glb, lnk, 'junction')
-  // so it doesn't try to install into npm's own node_modules
-  mkdirp.sync(resolve(pkg, 'node_modules'))
-  mkdirp.sync(dep)
-  fs.writeFileSync(resolve(dep, 'package.json'), JSON.stringify(fixture))
-  fs.writeFileSync(resolve(dep, 'index.js'), index)
+  fixture.create(base)
 }
