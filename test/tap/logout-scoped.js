@@ -47,7 +47,7 @@ test('npm logout', function (t) {
         t.notOk(code, 'exited OK')
 
         var config = fs.readFileSync(outfile, 'utf8')
-        t.equal(config, 'foo=boo\n', 'creds gone')
+        t.equal(config.trim(), 'foo=boo', 'creds gone')
         s.close()
         t.end()
       }
