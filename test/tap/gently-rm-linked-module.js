@@ -39,8 +39,7 @@ var env = extend({}, process.env)
 env.PREFIX = linkedGlobal
 var EXEC_OPTS = {
   cwd: workingDir,
-  env: env,
-  stdio: [0, 1, 2]
+  env: env
 }
 
 test('setup', function (t) {
