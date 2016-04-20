@@ -1,8 +1,3 @@
-if (process.platform === 'win32') {
-  console.error('skipping test, because windows and shebangs')
-  process.exit(0)
-}
-
 var common = require('../common-tap.js')
 var mr = require('npm-registry-mock')
 
@@ -14,6 +9,8 @@ var fakeBrowser = path.join(__dirname, '_script.sh')
 var outFile = path.join(__dirname, '/_output')
 
 var opts = { cwd: __dirname }
+
+common.pendIfWindows('This is trickier to convert without opening new shells')
 
 test('setup', function (t) {
   var s = '#!/usr/bin/env bash\n' +
