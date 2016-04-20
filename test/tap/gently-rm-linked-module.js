@@ -4,7 +4,6 @@ var basename = require('path').basename
 var resolve = require('path').resolve
 var fs = require('graceful-fs')
 var test = require('tap').test
-var mkdirp = require('mkdirp')
 var rimraf = require('rimraf')
 var Tacks = require('tacks')
 var File = Tacks.File
@@ -75,7 +74,7 @@ test('install and link', function (t) {
       } catch (ex) {
         t.ifError(ex, 'linking happened')
       }
-      if (code != 0) return t.end()
+      if (code !== 0) return t.end()
 
       // and try removing it and make sure that succeeds
       common.npm(
@@ -98,7 +97,7 @@ test('install and link', function (t) {
 })
 
 test('cleanup', function (t) {
-///  cleanup()
+  cleanup()
 
   t.end()
 })
