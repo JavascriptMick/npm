@@ -31,8 +31,7 @@ test('git-cache-locking: install a git dependency', function (t) {
     'git://github.com/nigelzor/npm-4503-c.git'
   ], {
     cwd: pkg,
-    env: gitEnv,
-    stdio: [0, 1, 2]
+    env: gitEnv
   }, function (err, code, stdout, stderr) {
     if (err) throw err
     t.equal(0, code, 'npm install should succeed')
