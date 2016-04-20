@@ -39,8 +39,7 @@ test('git-cache-no-hooks: install a git dependency', function (t) {
       HOME: process.env.HOME,
       Path: process.env.PATH,
       PATH: process.env.PATH
-    },
-    stdio: 'inherit'
+    }
   })
 
   child.on('close', function (code) {
