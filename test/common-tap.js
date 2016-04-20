@@ -2,7 +2,8 @@
 var fs = require('graceful-fs')
 var readCmdShim = require('read-cmd-shim')
 var isWindows = require('../lib/utils/is-windows.js')
-var isWindowsShell = require('../lib/utils/is-windows-shell.js')
+var escapeExecPath = require('../lib/utils/escape-exec-path.js')
+var escapeArg = require('../lib/utils/escape-arg.js')
 
 // cheesy hackaround for test deps (read: nock) that rely on setImmediate
 if (!global.setImmediate || !require('timers').setImmediate) {
@@ -30,25 +31,16 @@ process.env.random_env_var = 'foo'
 // suppress warnings about using a prerelease version of node
 process.env.npm_config_node_version = process.version.replace(/-.*$/, '')
 
-function quotify (str) {
-  if (!/ /.test(str)) return str
-  return '"' + str + '"'
-}
-function escapify (str) {
-  if (isWindowsShell) {
-    return str.split(/\\/).map(quotify).join('\\')
-  } else {
-    return quotify(str)
-  }
-}
-
-var bin = exports.bin = escapify(require.resolve('../bin/npm-cli.js'))
+var bin = exports.bin = require.resolve('../bin/npm-cli.js')
+// It's never safe to run this directly as windows doesn't understand shebangs,
+// which means this will only ever be an argument to another command.
+exports.binEscaped = escapeArg(require.resolve('../bin/npm-cli.js'))
 
 var chain = require('slide').chain
 var once = require('once')
 
 var nodeBin = exports.nodeBin = process.env.npm_node_execpath || process.env.NODE || process.execPath
-exports.nodeBinEscaped = escapify(exports.nodeBin)
+exports.nodeBinEscaped = escapeExecPath(exports.nodeBin)
 
 exports.npm = function (cmd, opts, cb) {
   cb = once(cb)
