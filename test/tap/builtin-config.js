@@ -38,7 +38,7 @@ test('install npm into first folder', function (t) {
               '--tmp=' + folder + '/tmp',
               '--loglevel=warn',
               '--progress']
-  common.npm(args, {stdio: 'inherit'}, function (er, code) {
+  common.npm(args, {}, function (er, code) {
     if (er) throw er
     t.equal(code, 0)
     t.end()
@@ -90,7 +90,7 @@ test('use first npm to install second npm', function (t) {
           '--cache=' + folder + '/cache',
           '--tmp=' + folder + '/tmp'
         ],
-        {stdio: 'inherit'}
+        {}
       )
       .on('error', function (er) { throw er })
       .on('close', function (code) {
