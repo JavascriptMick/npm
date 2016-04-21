@@ -10,7 +10,7 @@ var common = require('../common-tap.js')
 var pkg = path.resolve(__dirname, 'umask-lifecycle')
 
 var nodeCmd = common.nodeBinEscaped
-var npmCmd = nodeCmd + ' ' + common.bin
+var npmCmd = nodeCmd + ' ' + common.binEscaped
 var umaskScript = npmCmd + ' config get umask && ' + nodeCmd + ' -pe "[process.env.npm_config_umask, process.umask()]"'
 
 var pj = JSON.stringify({
