@@ -1,21 +1,50 @@
-var writeFileSync = require('graceful-fs').writeFileSync
 var child_process = require('child_process')
 var readdir = require('graceful-fs').readdirSync
+var path = require('path')
 var resolve = require('path').resolve
 
-var mkdirp = require('mkdirp')
 var rimraf = require('rimraf')
 var test = require('tap').test
-var tmpdir = require('osenv').tmpdir
 var which = require('which')
 
 var common = require('../common-tap.js')
+var escapeArg = require('../../lib/utils/escape-arg.js')
+var Tacks = require('tacks')
+var Dir = Tacks.Dir
+var File = Tacks.File
 
-var pkg = resolve(__dirname, 'git-npmignore')
-var dep = resolve(pkg, 'deps', 'gitch')
+var fixture = new Tacks(Dir({
+  deps: Dir({
+    gitch: Dir({
+      '.npmignore': File(
+        't.js\n'
+      ),
+      '.gitignore': File(
+        'node_modules/\n'
+      ),
+      'a.js': File(
+        "console.log('hi');"
+      ),
+      't.js': File(
+        "require('tap').test(function (t) { t.pass('I am a test!'); t.end(); });"
+      ),
+      'package.json': File({
+        name: 'gitch',
+        version: '1.0.0',
+        private: true,
+        main: 'a.js'
+      })
+    })
+  }),
+  'node_modules': Dir({
+  })
+}))
+
+var testdir = resolve(__dirname, path.basename(__filename, '.js'))
+var dep = resolve(testdir, 'deps', 'gitch')
 var packname = 'gitch-1.0.0.tgz'
-var packed = resolve(pkg, packname)
-var modules = resolve(pkg, 'node_modules')
+var packed = resolve(testdir, packname)
+var modules = resolve(testdir, 'node_modules')
 var installed = resolve(modules, 'gitch')
 var expected = [
   'a.js',
@@ -23,23 +52,11 @@ var expected = [
   '.npmignore'
 ].sort()
 
-var EXEC_OPTS = { cwd: pkg }
+var NPM_OPTS = { cwd: testdir }
 
-var gitignore = 'node_modules/\n'
-var npmignore = 't.js\n'
-
-var a = "console.log('hi');"
-var t = "require('tap').test(function (t) { t.pass('I am a test!'); t.end(); });"
-var fixture = {
-  'name': 'gitch',
-  'version': '1.0.0',
-  'private': true,
-  'main': 'a.js'
-}
-
-function exec (todo, cb) {
+function exec (todo, opts, cb) {
   console.log('    # EXEC:', todo)
-  child_process.exec(todo, cb)
+  child_process.exec(todo, opts, cb)
 }
 
 test('setup', function (t) {
@@ -71,10 +88,10 @@ function packInstallTest (spec, t) {
   console.log('    # pack', spec)
   common.npm(
     [
-      '--loglevel', 'silent',
+      '--loglevel', 'error',
       'pack', spec
     ],
-    EXEC_OPTS,
+    NPM_OPTS,
     function (err, code, stdout, stderr) {
       if (err) throw err
       t.is(code, 0, 'npm pack exited cleanly')
@@ -83,10 +100,10 @@ function packInstallTest (spec, t) {
 
       common.npm(
         [
-          '--loglevel', 'silent',
+          '--loglevel', 'error',
           'install', packed
         ],
-        EXEC_OPTS,
+        NPM_OPTS,
         function (err, code, stdout, stderr) {
           if (err) throw err
           t.is(code, 0, 'npm install exited cleanly')
@@ -105,79 +122,71 @@ function packInstallTest (spec, t) {
 }
 
 function cleanup () {
-  process.chdir(tmpdir())
-  rimraf.sync(pkg)
+  fixture.remove(testdir)
+  rimraf.sync(testdir)
 }
 
 function setup (cb) {
   cleanup()
 
-  mkdirp.sync(modules)
-  mkdirp.sync(dep)
-
-  process.chdir(dep)
-
-  writeFileSync(resolve(dep, '.npmignore'), npmignore)
-  writeFileSync(resolve(dep, '.gitignore'), gitignore)
-  writeFileSync(resolve(dep, 'a.js'), a)
-  writeFileSync(resolve(dep, 't.js'), t)
-  writeFileSync(resolve(dep, 'package.json'), JSON.stringify(fixture))
+  fixture.create(testdir)
 
   common.npm(
     [
-      '--loglevel', 'silent',
+      '--loglevel', 'error',
       'cache', 'clean'
     ],
-    EXEC_OPTS,
+    NPM_OPTS,
     function (er, code, _, stderr) {
       if (er) return cb(er)
       if (code) return cb(new Error('npm cache nonzero exit: ' + code))
       if (stderr) return cb(new Error('npm cache clean error: ' + stderr))
 
-      which('git', function found (er, git) {
+      which('git', function found (er, gitPath) {
         if (er) return cb(er)
 
-        exec(git + ' init', init)
+        var git = escapeArg(gitPath)
+
+        exec(git + ' init', {cwd: dep},  init)
 
         function init (er, _, stderr) {
           if (er) return cb(er)
           if (stderr) return cb(new Error('git init error: ' + stderr))
 
-          exec(git + " config user.name 'Phantom Faker'", user)
+          exec(git + " config user.name 'Phantom Faker'", {cwd: dep},  user)
         }
 
         function user (er, _, stderr) {
           if (er) return cb(er)
           if (stderr) return cb(new Error('git config error: ' + stderr))
 
-          exec(git + ' config user.email nope@not.real', email)
+          exec(git + ' config user.email nope@not.real', {cwd: dep},  email)
         }
 
         function email (er, _, stderr) {
           if (er) return cb(er)
           if (stderr) return cb(new Error('git config error: ' + stderr))
 
-          exec(git + ' config core.autocrlf input', autocrlf)
+          exec(git + ' config core.autocrlf input', {cwd: dep},  autocrlf)
         }
 
         function autocrlf (er, _, stderr) {
           if (er) return cb(er)
           if (stderr) return cb(new Error('git config error: ' + stderr))
 
-          exec(git + ' add .', addAll)
+          exec(git + ' add .', {cwd: dep},  addAll)
         }
 
         function addAll (er, _, stderr) {
           if (er) return cb(er)
           if (stderr) return cb(new Error('git add . error: ' + stderr))
 
-          exec(git + ' commit -m boot', commit)
+          exec(git + ' commit -m boot', {cwd: dep},  commit)
         }
 
         function commit (er, _, stderr) {
           if (er) return cb(er)
           if (stderr) return cb(new Error('git commit error: ' + stderr))
-
           cb()
         }
       })
