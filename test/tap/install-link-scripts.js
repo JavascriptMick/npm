@@ -24,7 +24,7 @@ var dependency = {
   name: 'dep',
   version: '1.0.0',
   scripts: {
-    install: './bin/foo'
+    install: 'node ./bin/foo'
   }
 }
 
