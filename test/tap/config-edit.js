@@ -38,7 +38,9 @@ test('saving configs', function (t) {
     cwd: pkg,
     env: {
       PATH: process.env.PATH,
-      EDITOR: 'node ' + editorPath
+      // We rely on the cwd + relative path combo here because otherwise,
+      // this test will break if there's spaces in the editorPath
+      EDITOR: 'node editor'
     }
   }
   common.npm(
