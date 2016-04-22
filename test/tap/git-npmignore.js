@@ -147,41 +147,41 @@ function setup (cb) {
 
         var git = escapeArg(gitPath)
 
-        exec(git + ' init', {cwd: dep},  init)
+        exec(git + ' init', {cwd: dep}, init)
 
         function init (er, _, stderr) {
           if (er) return cb(er)
           if (stderr) return cb(new Error('git init error: ' + stderr))
 
-          exec(git + " config user.name 'Phantom Faker'", {cwd: dep},  user)
+          exec(git + " config user.name 'Phantom Faker'", {cwd: dep}, user)
         }
 
         function user (er, _, stderr) {
           if (er) return cb(er)
           if (stderr) return cb(new Error('git config error: ' + stderr))
 
-          exec(git + ' config user.email nope@not.real', {cwd: dep},  email)
+          exec(git + ' config user.email nope@not.real', {cwd: dep}, email)
         }
 
         function email (er, _, stderr) {
           if (er) return cb(er)
           if (stderr) return cb(new Error('git config error: ' + stderr))
 
-          exec(git + ' config core.autocrlf input', {cwd: dep},  autocrlf)
+          exec(git + ' config core.autocrlf input', {cwd: dep}, autocrlf)
         }
 
         function autocrlf (er, _, stderr) {
           if (er) return cb(er)
           if (stderr) return cb(new Error('git config error: ' + stderr))
 
-          exec(git + ' add .', {cwd: dep},  addAll)
+          exec(git + ' add .', {cwd: dep}, addAll)
         }
 
         function addAll (er, _, stderr) {
           if (er) return cb(er)
           if (stderr) return cb(new Error('git add . error: ' + stderr))
 
-          exec(git + ' commit -m boot', {cwd: dep},  commit)
+          exec(git + ' commit -m boot', {cwd: dep}, commit)
         }
 
         function commit (er, _, stderr) {
