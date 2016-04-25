@@ -6,11 +6,13 @@ var rimraf = require('rimraf')
 var test = require('tap').test
 var sprintf = require('sprintf-js').sprintf
 
+var escapeExecPath = require('../../lib/utils/escape-exec-path.js')
+var escapeArg = require('../../lib/utils/escape-arg.js')
 var common = require('../common-tap.js')
 var pkg = path.resolve(__dirname, 'umask-lifecycle')
 
-var nodeCmd = common.nodeBinEscaped
-var npmCmd = nodeCmd + ' ' + common.binEscaped
+var nodeCmd = escapeExecPath(common.nodeBin)
+var npmCmd = nodeCmd + ' ' + escapeArg(common.bin)
 var umaskScript = npmCmd + ' config get umask && ' + nodeCmd + ' -pe "[process.env.npm_config_umask, process.umask()]"'
 
 var pj = JSON.stringify({

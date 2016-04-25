@@ -14,8 +14,9 @@ var folder = path.resolve(__dirname, 'builtin-config')
 var test = require('tap').test
 var npm = path.resolve(__dirname, '../..')
 var spawn = require('child_process').spawn
+var escapeExecPath = require('../../lib/utils/escape-exec-path.js')
+var escapeArg = require('../../lib/utils/escape-arg.js')
 var node = common.nodeBin
-var nodeEscaped = common.nodeBinEscaped
 
 test('setup', function (t) {
   t.plan(1)
@@ -52,7 +53,7 @@ test('write npmrc file', function (t) {
               '--cache=' + folder + '/cache',
               '--tmp=' + folder + '/tmp',
               '--',
-              nodeEscaped, __filename, 'write-builtin', process.pid
+              escapeExecPath(node), escapeArg(__filename), 'write-builtin', process.pid
              ],
              {'stdio': 'inherit'},
              function (er, code) {
