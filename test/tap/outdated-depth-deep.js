@@ -5,7 +5,6 @@ var rimraf = require('rimraf')
 var mr = require('npm-registry-mock')
 var pkg = path.resolve(__dirname, 'outdated-depth-deep')
 var cache = path.resolve(pkg, 'cache')
-var escapeExecPath = require('../../lib/utils/escape-exec-path.js')
 
 var osenv = require('osenv')
 var mkdirp = require('mkdirp')
@@ -41,50 +40,50 @@ test('setup', function (t) {
 })
 
 test('outdated depth deep (9999)', function (t) {
-  var NPM_OPTS = {
-    cwd: pkg,
-    cache: cache
+  var conf = [
+    '--registry', common.registry,
+    '--cache', cache
+  ]
+
+  var server
+  mr({ port: common.port }, thenTopLevelInstall)
+
+  function thenTopLevelInstall (err, s) {
+    if (err) throw err
+    server = s
+    common.npm(conf.concat(['install', '.']), {cwd: pkg}, thenDeepInstall)
   }
-  mr({ port: common.port }, function (er, s) {
-    common.npm([
-      'install', '.',
-      '--registry', common.registry
-    ], NPM_OPTS, function (err, code, stdout, stderr) {
-      t.ifErr(err, 'command ran without error')
-      t.equal(code, 0, 'install completed successfully')
-      t.equal('', stderr, 'no error output')
-      common.npm([
-        'explore', 'npm-test-peer-deps', '--',
-        common.nodeBinEscaped,
-        escapeExecPath(common.bin),
-        'install', 'underscore',
-        '--registry', common.registry
-      ], NPM_OPTS, function (err, code, stdout, stderr) {
-        t.ifErr(err, 'command ran without error')
-        t.equal(code, 0, 'explore completed successfully')
-        t.equal('', stderr, 'no error output')
-        common.npm([
-          'outdated',
-          '--depth', 9999,
-          '--registry', common.registry
-        ], NPM_OPTS, function (err, code, stdout, stderr) {
-          t.ifErr(err, 'command ran without error')
-          t.equal(code, 0, 'outdated completed successfully')
-          t.equal('', stderr, 'no error output')
-          t.match(
-            stdout,
-            /underscore.*1\.3\.1.*1\.3\.1.*1\.5\.1.*whatever\n/g,
-            'child package listed')
-          t.match(
-            stdout,
-            /underscore.*1\.3\.1.*1\.3\.1.*1\.5\.1.*whatever > npm-test-peer-deps/g,
-            'child package listed')
-          s.close()
-          t.end()
-        })
-      })
-    })
-  })
+
+  function thenDeepInstall (err, code, stdout, stderr) {
+    if (err) throw err
+    t.is(code, 0, 'install completed successfully')
+    t.is('', stderr, 'no error output')
+    var depPath = path.join(pkg, 'node_modules', 'npm-test-peer-deps')
+    common.npm(conf.concat(['install', 'underscore']), {cwd: depPath}, thenRunOutdated)
+  }
+
+  function thenRunOutdated (err, code, stdout, stderr) {
+    if (err) throw err
+    t.is(code, 0, 'deep install completed successfully')
+    t.is('', stderr, 'no error output')
+    common.npm(conf.concat(['outdated', '--depth', 9999]), {cwd: pkg}, thenValidateOutput)
+  }
+
+  function thenValidateOutput (err, code, stdout, stderr) {
+    if (err) throw err
+    t.is(code, 0, 'outdated completed successfully')
+    t.is('', stderr, 'no error output')
+    t.match(
+      stdout,
+      /underscore.*1\.3\.1.*1\.3\.1.*1\.5\.1.*whatever\n/g,
+      'child package listed')
+    t.match(
+      stdout,
+      /underscore.*1\.3\.1.*1\.3\.1.*1\.5\.1.*whatever > npm-test-peer-deps/g,
+      'child package listed')
+    server.close()
+    t.end()
+  }
 })
 
 test('cleanup', function (t) {
