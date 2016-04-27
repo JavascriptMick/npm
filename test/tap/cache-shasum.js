@@ -1,4 +1,3 @@
-var npm = require.resolve('../../')
 var test = require('tap').test
 var path = require('path')
 var rimraf = require('rimraf')
@@ -6,7 +5,6 @@ var mkdirp = require('mkdirp')
 var mr = require('npm-registry-mock')
 var common = require('../common-tap.js')
 var cache = path.resolve(__dirname, 'cache-shasum')
-var spawn = require('child_process').spawn
 var sha = require('sha')
 var server
 
@@ -26,7 +24,7 @@ test('npm cache add request', function (t) {
     '--cache=' + cache,
     '--registry=' + common.registry,
     '--loglevel=error'
-  ], {stdio: [0,'pipe',2]}, function (err, code, stdout) {
+  ], {}, function (err, code, stdout) {
     if (err) throw err
     t.is(code, 0, 'cmd ran without error')
     t.is(stdout, '', 'should not get data on stdout')
