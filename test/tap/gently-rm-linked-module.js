@@ -36,7 +36,14 @@ var toInstall = resolve(base, 'test-module')
 var linkedGlobal = resolve(base, 'linked-global-dir')
 
 var env = extend({}, process.env)
-env.PREFIX = linkedGlobal
+
+// We set the global install location via env var here
+// instead of passing it in via `--prefix` because
+// `--prefix` ALSO changes the current package location.
+// And we don't ue the PREFIX env var because
+// npm_config_prefix takes precedence over it and is
+// passed in when running from the npm test suite.
+env.npm_config_prefix = linkedGlobal
 var EXEC_OPTS = {
   cwd: workingDir,
   env: env
