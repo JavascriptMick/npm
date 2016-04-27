@@ -46,6 +46,5 @@ test('compare', function (t) {
 
 test('cleanup', function (t) {
   server.close()
-  rimraf.sync(cache)
-  t.end()
+  rimraf(cache, t.end)
 })
